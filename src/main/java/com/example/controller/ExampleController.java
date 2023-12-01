@@ -47,16 +47,20 @@ public class ExampleController {
 		HttpRange range = headers.getRange().stream().findFirst().orElse(null);
 		HttpStatusCode httpStatusCode = HttpStatus.OK;
 
-		long start = 0L;
-		long end = resource.contentLength();
+		long ChunkSize = 1024 * 1024 * 8;
 
+		long contentLength = resource.contentLength();
+
+		ResourceRegion region;
 		if (range != null) {
-			start = range.getRangeStart(resource.contentLength());
-			end = range.getRangeEnd(resource.contentLength());
+			long start = range.getRangeStart(contentLength);
+			long end = range.getRangeEnd(contentLength);
+			long rangeLength = Math.min(ChunkSize, end - start + 1);
+			region = new ResourceRegion(resource, start, rangeLength);
 			httpStatusCode = HttpStatus.PARTIAL_CONTENT;
+		} else {
+			region = new ResourceRegion(resource, 0, contentLength);
 		}
-
-		ResourceRegion region = new ResourceRegion(resource, start, end);
 
 		return Mono.just(ResponseEntity.status(httpStatusCode).contentType(MediaTypeFactory.getMediaType(resource).orElse(MediaType.APPLICATION_OCTET_STREAM)).body(region));
 
