@@ -15,21 +15,29 @@ import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.reactive.result.view.Rendering;
 
 import com.example.dto.ExampleOutputDto;
 
 import reactor.core.publisher.Mono;
 
-@RestController
+@Controller
 @RequestMapping
 public class ExampleController {
 
+	@GetMapping("/")
+	public Mono<Rendering> index() {
+		return Mono.just(Rendering.view("index").build());
+	}
+	
+	@ResponseBody
 	@GetMapping("/hello")
 	public Mono<ResponseEntity<ExampleOutputDto>> hello() {
 		ExampleOutputDto exampleOutputDto = new ExampleOutputDto();
@@ -38,6 +46,7 @@ public class ExampleController {
 		return Mono.just(ResponseEntity.ok().body(exampleOutputDto));
 	}
 
+	@ResponseBody
 	@GetMapping("/download")
 	public Mono<ResponseEntity<ResourceRegion>> download(@RequestHeader HttpHeaders headers) throws IOException {
 
@@ -66,6 +75,7 @@ public class ExampleController {
 
 	}
 
+	@ResponseBody
 	@PostMapping("/upload")
 	public Mono<Void> handleFileUpload(@RequestPart("file") Mono<FilePart> filePartMono) {
 		File folder = new File("C:\\path\\to\\folder");
