@@ -1,6 +1,7 @@
 package com.example.codec;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -68,8 +69,14 @@ public class ResourceRegionMessageWriter implements HttpMessageWriter<ResourceRe
 			}
 			long start = resourceRegion.getPosition();
 			long end = Math.min(start + resourceRegion.getCount() - 1, contentLength - 1);
-			headers.add("Content-Range", "bytes " + start + '-' + end + '/' + contentLength);
+			headers.add(HttpHeaders.CONTENT_RANGE, "bytes " + start + '-' + end + '/' + contentLength);
 			headers.setContentLength(end - start + 1);
+
+			String disposition = "inline";
+			if (!resourceMediaType.toString().startsWith("image")) {
+				disposition = request.getHeaders().getAccept().stream().anyMatch(accept -> accept == resourceMediaType) ? "inline" : "attachment";
+			}
+			headers.add(HttpHeaders.CONTENT_DISPOSITION, disposition + ";filename=\"" + encodeFileName(resourceRegion.getResource().getFilename()) + "\"");
 
 			return zeroCopy(resourceRegion.getResource(), resourceRegion, response).orElseGet(() -> {
 				Mono<ResourceRegion> input = Mono.just(resourceRegion);
@@ -77,6 +84,14 @@ public class ResourceRegionMessageWriter implements HttpMessageWriter<ResourceRe
 				return response.writeWith(body);
 			});
 		});
+	}
+
+	private static String encodeFileName(String fileName) {
+		try {
+			return URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+		} catch (Exception e) {
+			return fileName;
+		}
 	}
 
 	private static MediaType getResourceMediaType(MediaType mediaType, Resource resource) {

@@ -50,7 +50,7 @@ public class ExampleController {
 	@GetMapping("/download")
 	public Mono<ResponseEntity<ResourceRegion>> download(@RequestHeader HttpHeaders headers) throws IOException {
 
-		File file = new File("C:\\path\\to\\file.txt");
+		File file = new File("C:\\Users\\Derrek\\Desktop\\spring.svg");
 		Resource resource = new FileSystemResource(file);
 
 		HttpRange range = headers.getRange().stream().findFirst().orElse(null);
